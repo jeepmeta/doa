@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #050505;
+  background-image: 
+    radial-gradient(circle at 50% 0%, #1a0000 0%, transparent 50%),
+    linear-gradient(rgba(255, 42, 42, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 42, 42, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 30px 30px, 30px 30px;
+}
+
+.crt-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+              linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 2px, 3px 100%;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.neon-text-red { text-shadow: 0 0 5px #ff2a2a, 0 0 10px #ff2a2a, 0 0 20px #8b0000; }
+.neon-text-green { text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41; }
+.neon-border-red { box-shadow: 0 0 10px rgba(255,42,42,0.5), inset 0 0 10px rgba(255,42,42,0.2); border: 1px solid #ff2a2a; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar-thumb { background: #330000; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #ff2a2a; }
