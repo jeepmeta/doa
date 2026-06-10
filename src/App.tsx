@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Skull } from 'lucide-react';
 import { Card } from './components/Card';
 import { BuyButton } from './components/BuyButton';
@@ -121,7 +121,6 @@ export default function App() {
         .neon-text-red { text-shadow: 0 0 5px #ff2a2a, 0 0 10px #ff2a2a, 0 0 20px #8b0000; }
         .neon-text-green { text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41; }
         .neon-border-red { box-shadow: 0 0 10px rgba(255,42,42,.5), inset 0 0 10px rgba(255,42,42,.2); border:1px solid #ff2a2a; }
-        .crt-overlay { position:fixed; inset:0; pointer-events:none; z-index:50; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,.25) 50%), linear-gradient(90deg,rgba(255,0,0,.06),rgba(0,255,0,.02),rgba(0,0,255,.06)); background-size:100% 2px, 3px 100%; }
       `}</style>
     </div>
   );
