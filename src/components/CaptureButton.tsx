@@ -12,5 +12,5 @@ export const CaptureButton: React.FC = () => {
     a.href = c.toDataURL();
     a.click();
   };
-  return <Button variant="ghost" onClick={snap}><span>📸</span> SNAPSHOT</Button>;
+  return <Button variant="ghost" onClick={snap}><span>📸</span></Button>;
 };

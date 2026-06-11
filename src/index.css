@@ -11,13 +11,16 @@ body {
 
 .crt-overlay {
   position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-              linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-  background-size: 100% 2px, 3px 100%;
-  z-index: 50;
+  inset: 0;
+  z-index: 0;
   pointer-events: none;
+  opacity: 0.45;
+  background: 
+    linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.08) 50%),
+    linear-gradient(90deg, rgba(255,0,0,0.04), rgba(0,255,0,0.015), rgba(0,0,255,0.04));
+  background-size: 100% 2px, 3px 100%;
 }
+
 
 .neon-text-red { text-shadow: 0 0 5px #ff2a2a, 0 0 10px #ff2a2a, 0 0 20px #8b0000; }
 .neon-text-green { text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41; }

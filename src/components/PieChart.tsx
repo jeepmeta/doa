@@ -1,6 +1,9 @@
 import React from 'react';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { Card } from './Card';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const data = {
   labels: ['Rugged', 'Dumped', 'Survived'],

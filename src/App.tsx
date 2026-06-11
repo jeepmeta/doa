@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Skull } from 'lucide-react';
+
 import { Card } from './components/Card';
 import { BuyButton } from './components/BuyButton';
 import { CaptureButton } from './components/CaptureButton';
@@ -116,7 +117,7 @@ export default function App() {
       <style>{`
         .glitch { animation: flicker 2.8s infinite linear; }
         @keyframes flicker { 0%,19%,22%,62%,64%,70%,100% {opacity:1} 20%,21%,63%,65%,69% {opacity:0.35} }
-        .animate-marquee { animation: marquee 35s linear infinite; }
+        .animate-marquee { animation: marquee 32s linear infinite; }
         @keyframes marquee { from {transform:translateX(0)} to {transform:translateX(-50%)} }
         .neon-text-red { text-shadow: 0 0 5px #ff2a2a, 0 0 10px #ff2a2a, 0 0 20px #8b0000; }
         .neon-text-green { text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41; }
