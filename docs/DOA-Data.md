@@ -1,343 +1,169 @@
-# DOA Data Engine  
-### The Unified Meme‑Coin Telemetry System  
-### (Backend + Frontend Architecture Spec)
+# DOA Data Engine
+### The Unified Meme‑Coin Telemetry System
+### (Supabase-Centric Architecture Spec)
 
-The DOA Data Engine is the subsystem responsible for ingesting, normalizing, merging, buffering, and distributing real‑time meme‑coin data across the DOA Dashboard.
+The DOA Data Engine is the subsystem responsible for ingesting, normalizing, buffering, and distributing real‑time meme‑coin data across the DOA Dashboard. 
 
-It is designed to be:
-
-- **Free‑API friendly**
-- **Websocket‑enhanced**
-- **Modular**
-- **Fault‑tolerant**
-- **Normalized**
-- **Fast**
-- **Simple to extend**
-- **Simple to debug**
-
-This document defines the full architecture, folder structure, data flow, and external connections.
+By migrating heavy orchestration to the backend and using Supabase as the state and distribution layer, this architecture eliminates client-side memory bloat and protects API keys.
 
 ---
 
-# 1. Goals
+## 1. Design Principles
 
-The DOA Data Engine must:
-
-- Ingest data from **multiple free sources**
-- Maximize **free API limits**
-- Use **websockets** where available
-- Normalize all data into a **single DOA format**
-- Maintain a **rolling 24‑hour buffer**
-- Provide **real‑time updates** to the UI
-- Detect:
-  - new launches  
-  - rugs  
-  - dumps  
-  - survivors  
-- Power:
-  - Chain‑of‑Pain  
-  - Rug‑O‑Meter  
-  - Kill Feed  
-  - Metrics Grid  
-  - Top Predators  
-  - Lifespan Banner  
-- Keep **all API keys on the backend**
-- Expose a clean `/api/doa/*` interface to the frontend
+- **Free-tier friendly:** Minimizes outbound API requests via centralized polling and caching.
+- **WebSocket + polling hybrid:** Uses high-velocity streams where available, backed by periodic REST updates.
+- **Server-side security:** All external API keys remain strictly on the backend.
+- **Normalized single source of truth:** Diverse data pipelines converge into a uniform schema.
+- **Real-time distribution:** Leverages Supabase Realtime to push updates instantly to React without heavy client-side polling.
+- **Lean frontend:** Eliminates custom frontend event buses, schedulers, and heavy in-memory caches.
 
 ---
 
-# 2. High‑Level Architecture
+## 2. Goals
 
-```md
-+-------------------------+
-|   External Data Sources |
-+-------------------------+
-     |   |   |   |   |
-     v   v   v   v   v
-+----------------------------------+
-|   Connection Modules (frontend)  |
-|   pumpfun.ts                     |
-|   dexscreener.ts                 |
-|   jupiter.ts                     |
-|   solscan.ts                     |
-|   helius.ts                      |
-+----------------------------------+
-     | normalized DOA records
-     v
-+----------------------------------+
-|   DOA Data Provider (frontend)   |
-|   - merges                       |
-|   - dedupes                      |
-|   - classifies                   |
-|   - aggregates                   |
-|   - buffers                      |
-|   - emits events                 |
-+----------------------------------+
-     | event stream
-     v
-+----------------------------------+
-|   UI Components                  |
-|   - ChainOfPain                  |
-|   - RugOMeter                    |
-|   - KillFeed                     |
-|   - MetricsGrid                  |
-|   - TopPredators                 |
-+----------------------------------+
+- Ingest data exclusively from **Dexscreener** and **Helius**.
+- Normalize all incoming data into a single `MemeCoinRecord` format.
+- Maintain a rolling 24‑hour view of market activity.
+- Detect launches, rugs, dumps, and survivors in real time.
+- Power the following UI components:
+  - Metrics Grid
+  - Top Predators
+  - Kill Feed
+  - Lifespan Banner
+  - Chain-of-Pain
+  - Rug-O-Meter
+- Restrict data exposure to the frontend via secure Supabase read-only hooks.
+
+---
+
+## 3. High‑Level Architecture
+
+```text
+  [ External Data Sources ]
+     │                 │
+     ▼ (REST Polling)  ▼ (Webhooks / WS)
+┌────────────────────────────────────────┐
+│        Supabase Edge Functions         │
+│  ├── dexscreener-pull                  │
+│  └── helius-listener                   │
+└────────────────────────────────────────┘
+     │
+     ▼ (Normalize & Classify)
+┌────────────────────────────────────────┐
+│           Supabase Database            │
+│  ├── meme_coins                        │
+│  ├── kill_events                       │
+│  └── hourly_snapshots                  │
+└────────────────────────────────────────┘
+     │
+     ▼ (Supabase Realtime Stream)
+┌────────────────────────────────────────┐
+│         React Frontend (Vite)          │
+│  └── Custom Hooks (useMemeCoins)       │
+└────────────────────────────────────────┘
 ```
 
-Backend sits underneath all of this:
-
-```tree
-Frontend → /api/doa/* → Backend → External APIs
-```
+> **Key Operational Concept:** Supabase handles data persistence and real-time distribution. The frontend remains entirely stateless, reactive, and lightweight.
 
 ---
 
-# 3. Folder Structure
+## 4. Folder Structure
 
 ```tree
 /src
-  /data-engine
-    /connections
-      pumpfun.ts
-      dexscreener.ts
-      jupiter.ts
-      solscan.ts
-      helius.ts
+  /lib
+    /doa
+      /types
+        MemeCoinRecord.ts
+        KillEvent.ts
+      /supabase
+        client.ts
+        realtime.ts
+      /connections
+        dexscreener.ts
+        helius.ts
+      /normalizers  
+        normalizeDexscreener.ts
+        normalizeHelius.ts
+      classifier.ts
 
-    /normalizers
-      normalizePumpfun.ts
-      normalizeDexscreener.ts
-      normalizeJupiter.ts
-      normalizeSolscan.ts
-      normalizeHelius.ts
-
-    /core
-      DOADataProvider.ts
-      DOADataBuffer.ts
-      DOAEventBus.ts
-      DOAScheduler.ts
-      DOAClassifier.ts
-
-    /types
-      MemeCoinRecord.ts
-      KillEvent.ts
-      HourBucket.ts
-
-/backend
-  /api
-    doa-proxy.ts
-    pumpfun-proxy.ts
-    dexscreener-proxy.ts
-    jupiter-proxy.ts
-    solscan-proxy.ts
-    helius-proxy.ts
-
-/docs
-  DOADATA.md
+/supabase
+  /functions
+    /dexscreener
+    /helius
+  /migrations
+    schema.sql
 ```
 
 ---
 
-# 4. The DOA MemeCoinRecord Format
+## 5. The DOA MemeCoinRecord Format
 
-All sources normalize into this shape:
+All data pipelines must normalize their output into this single schema before writing to the database:
 
 ```ts
 export type MemeCoinRecord = {
   mint: string;
   name: string;
   symbol: string;
-  createdAt: number;      // unix timestamp
-  liquidity: number;
-  volume24h: number;
-  marketCap: number;
-  status: "rugged" | "dumped" | "survived";
-  chain: "solana";
-  source: "pumpfun" | "dexscreener" | "jupiter" | "solscan" | "helius";
+  createdAt: number;        // Unix timestamp
+  price: number;            // Current token price
+  liquidity: number;        // USD value in pools
+  volume24h: number;        // 24h rolling volume
+  marketCap: number;        // USD market capitalization
+  status: 'launched' | 'rugged' | 'dumped' | 'survived';
+  source: 'dexscreener' | 'helius';
+  updatedAt: number;        // Unix timestamp of last mutation
 };
 ```
 
-This is the **Rosetta Stone** of the DOA Data Engine.
+---
+
+## 6. Connection Modules
+
+### 6.1 Dexscreener
+- **Purpose:** Tracks liquidity, volume, market cap, and trending pairs.
+- **Method:** REST polling executed by a centralized Supabase Cron/Edge Function (every 15–30s).
+- **Role:** Primary engine for baseline pricing and financial metric state.
+
+### 6.2 Helius
+- **Purpose:** Instantly catches real-time account mutations, program logs, mint events, and rug signals.
+- **Method:** Webhook endpoints and WebSocket connections managed via a dedicated Edge Function bridge.
+- **Role:** Primary engine for immediate event telemetry and state classification.
 
 ---
 
-# 5. Connection Modules
+## 7. Data Flow & Lifecycles
 
-Each connection module:
-
-- maximizes free API usage  
-- handles rate limits  
-- handles retries  
-- handles pagination  
-- normalizes data  
-- exposes:
-
-```ts
-pull(): Promise<MemeCoinRecord[]>
-subscribe(callback): unsubscribe
+```text
+Dexscreener (REST Polling) ──┐
+                             ├──→ Edge Function → Normalize & Classify → Supabase DB → Realtime Channel → React UI
+Helius (WS / Webhooks) ──────┘
 ```
 
-### 5.1 Pump.fun  
-**Purpose:** new launches, bonding curve state  
-**Source:** unofficial API + HTML scrape  
-**Type:** polling (10s)
-
-### 5.2 Dexscreener  
-**Purpose:** liquidity, volume, trending  
-**Source:** free REST API  
-**Type:** polling (15s)
-
-### 5.3 Jupiter  
-**Purpose:** price quotes, token list  
-**Source:** REST  
-**Type:** polling (30s)
-
-### 5.4 Solscan  
-**Purpose:** metadata, holders  
-**Source:** REST  
-**Type:** polling (60s)
-
-### 5.5 Helius  
-**Purpose:** logs, account changes, rugs  
-**Source:** webhooks + RPC  
-**Type:** websocket + polling
+1. **Ingestion:** Edge Functions handle cron-based polling (Dexscreener) or listen to open hooks (Helius).
+2. **Normalization:** Raw payloads pass through `normalizer.ts` and `classifier.ts` on the server layer.
+3. **Storage:** The record is upserted into the PostgreSQL database. Row Level Security (RLS) ensures public clients have **read-only** access.
+4. **Broadcast:** The database mutation triggers a Supabase Realtime event.
+5. **Render:** React components subscribed to the matching channel update instantly with zero local computation lag.
 
 ---
 
-# 6. DOA Data Buffer
+## 8. Scope (Phase 1)
 
-The buffer stores:
+### In-Scope
+* Centralized Dexscreener polling and automated ingestion.
+* Helius webhook processing and real-time log parsing.
+* Supabase schema definitions, indices, and Realtime setups.
+* Basic deterministic status classification (e.g., liquidity drops $> 90\%$ trigger a `'rugged'` state instantly).
 
-```ts
-tokens: Map<string, MemeCoinRecord>
-hourlyBuckets: HourBucket[] // 24 items
-killFeed: KillEvent[]
-lastUpdated: number
-```
-
-This is the **memory** of the system.
-
----
-
-# 7. DOA Event Bus
-
-A simple pub/sub system:
-
-```ts
-subscribe(callback)
-unsubscribe(callback)
-emit(event)
-```
-
-UI components listen to this.
+### Out-of-Scope
+* Integrating secondary APIs (Pump.fun, Jupiter, Solscan).
+* Designing complex frontend in-memory state buffers.
+* Building predictive, ML-based rug scoring models.
 
 ---
 
-# 8. DOA Scheduler
+## 9. Summary
 
-A tiny heartbeat:
-
-- pumpfun: every 10s  
-- dexscreener: every 15s  
-- jupiter: every 30s  
-- solscan: every 60s  
-- helius: websocket  
-- aggregates: every 60s  
-- hour rollover: at :00  
-
-This keeps everything in sync.
-
----
-
-# 9. DOA Classifier
-
-Classifies tokens into:
-
-- rugged  
-- dumped  
-- survived  
-
-Based on:
-
-- liquidity drop  
-- volume collapse  
-- price delta  
-- bonding curve exit  
-- helius logs  
-
----
-
-# 10. Backend Proxy
-
-All keys live in backend.
-
-Frontend calls:
-
-```
-/api/doa/pumpfun
-/api/doa/dexscreener
-/api/doa/jupiter
-/api/doa/solscan
-/api/doa/helius
-```
-
-Backend:
-
-- stores keys  
-- rate limits  
-- caches  
-- normalizes  
-- protects you  
-
----
-
-# 11. Data Flow Summary
-
-```tree
-External APIs → Backend Proxy → Connection Modules → Normalizers → Buffer → Provider → Event Bus → UI
-```
-
----
-
-# 12. What This Enables
-
-- Real‑time Chain‑of‑Pain growth  
-- Real‑time Rug‑O‑Meter updates  
-- Live kill feed  
-- Hourly candle rollover  
-- 24‑hour rolling window  
-- Top predators  
-- Lifespan metrics  
-- Zero UI lag  
-- Zero wasted API calls  
-- Zero key exposure  
-
----
-
-# 13. Future Extensions
-
-- Multi‑chain support  
-- Token‑gated premium data  
-- Historical archive  
-- Predictive rug scoring  
-- DOA AI agent for token analysis  
-
----
-
-# 14. Summary
-
-The DOA Data Engine is:
-
-- modular  
-- scalable  
-- free‑API optimized  
-- websocket‑enhanced  
-- normalized  
-- buffered  
-- event‑driven  
-- backend‑secured  
-
-This file defines the architecture.  
-The next step is implementing the modules.
-
+This architecture exchanges a fragile, rate-limited client infrastructure for a secure, highly scalable serverless backend. By utilizing **Supabase Edge Functions** as the ingestion gatekeeper and **Supabase Realtime** as the pipeline, the system safely encapsulates API credentials, maintains deterministic token classification, and serves a blazing fast telemetry UI to the browser.
