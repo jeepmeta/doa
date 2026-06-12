@@ -1,32 +1,149 @@
 @import "tailwindcss";
 
+/* =========================================
+   1. BRAND VARIABLES (THE SOURCE OF TRUTH)
+   ========================================= */
+:root {
+  /* Core Backgrounds */
+  --color-bg: #050505;
+  --color-bg-panel: #0a0a0a;
+
+  /* Semantic Colors */
+  --color-red: #ff2a2a;
+  --color-red-dim: #8b0000;
+  
+  --color-green: #00ff41;
+  --color-green-dim: #006400;
+  
+  --color-yellow: #ffea00;
+  --color-yellow-dim: #b3a400;
+  
+  /* Neutrals */
+  --color-white: #f3f4f6;
+  --color-grey: #a5b8d3;
+  --color-grey-dark: #1f2937;
+}
+
+/* Optional: Lock in a terminal/cyberpunk font */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
+
+/* =========================================
+   2. GLOBAL FOUNDATION
+   ========================================= */
 body {
-  background-color: #050505;
+  background-color: var(--color-bg);
   background-image: 
     radial-gradient(circle at 50% 0%, #1a0000 0%, transparent 50%),
     linear-gradient(rgba(255, 42, 42, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 42, 42, 0.03) 1px, transparent 1px);
   background-size: 100% 100%, 30px 30px, 30px 30px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--color-white);
+  margin: 0;
+  padding: 0;
 }
 
-.crt-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.45;
+.crt-overlay { 
+  position: fixed; 
+  top: 0; left: 0; 
+  width: 100vw; height: 100vh; 
   background: 
-    linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.08) 50%),
-    linear-gradient(90deg, rgba(255,0,0,0.04), rgba(0,255,0,0.015), rgba(0,0,255,0.04));
-  background-size: 100% 2px, 3px 100%;
+    linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%), 
+    linear-gradient(90deg, rgba(255,0,0,0.06), rgba(0,255,0,0.02), rgba(0,0,255,0.06)); 
+  background-size: 100% 2px, 3px 100%; 
+  z-index: 50; 
+  pointer-events: none; 
 }
 
+/* =========================================
+   3. TEXT UTILITIES
+   ========================================= */
+/* Solid Colors */
+.text-brand-red { color: var(--color-red); }
+.text-brand-green { color: var(--color-green); }
+.text-brand-yellow { color: var(--color-yellow); }
+.text-brand-white { color: var(--color-white); }
+.text-brand-grey { color: var(--color-grey); }
 
-.neon-text-red { text-shadow: 0 0 5px #ff2a2a, 0 0 10px #ff2a2a, 0 0 20px #8b0000; }
-.neon-text-green { text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41; }
-.neon-border-red { box-shadow: 0 0 10px rgba(255,42,42,0.5), inset 0 0 10px rgba(255,42,42,0.2); border: 1px solid #ff2a2a; }
+/* Neon Glow Texts */
+.neon-text-red { 
+  text-shadow: 0 0 5px var(--color-red), 0 0 10px var(--color-red), 0 0 20px var(--color-red-dim); 
+  color: var(--color-white); 
+}
+.neon-text-green { 
+  text-shadow: 0 0 5px var(--color-green), 0 0 10px var(--color-green), 0 0 20px var(--color-green-dim); 
+  color: var(--color-white); 
+}
+.neon-text-yellow { 
+  text-shadow: 0 0 5px var(--color-yellow), 0 0 10px var(--color-yellow), 0 0 20px var(--color-yellow-dim); 
+  color: var(--color-white); 
+}
+.neon-text-grey { 
+  text-shadow: 0 0 5px var(--color-grey), 0 0 10px var(--color-grey); 
+  color: var(--color-white); 
+}
 
+/* =========================================
+   4. BORDERS & NEON PANELS
+   ========================================= */
+/* Solid Borders */
+.border-brand-red { border: 1px solid var(--color-red); }
+.border-brand-green { border: 1px solid var(--color-green); }
+.border-brand-yellow { border: 1px solid var(--color-yellow); }
+.border-brand-white { border: 1px solid var(--color-white); }
+.border-brand-grey { border: 1px solid var(--color-grey-dark); }
+
+/* Glowing Borders (Panels/Cards) */
+.neon-border-red { 
+  box-shadow: 0 0 10px rgba(255,42,42,0.5), inset 0 0 10px rgba(255,42,42,0.2); 
+  border: 1px solid var(--color-red); 
+}
+.neon-border-green { 
+  box-shadow: 0 0 10px rgba(0,255,65,0.5), inset 0 0 10px rgba(0,255,65,0.2); 
+  border: 1px solid var(--color-green); 
+}
+.neon-border-yellow { 
+  box-shadow: 0 0 10px rgba(255,234,0,0.5), inset 0 0 10px rgba(255,234,0,0.2); 
+  border: 1px solid var(--color-yellow); 
+}
+.neon-border-white { 
+  box-shadow: 0 0 10px rgba(243,244,246,0.3), inset 0 0 10px rgba(243,244,246,0.1); 
+  border: 1px solid var(--color-grey); 
+}
+
+/* =========================================
+   5. PULSE ANIMATIONS (ALERTS/ACTIVE STATES)
+   ========================================= */
+@keyframes pulse-glow-red {
+  0%, 100% { box-shadow: 0 0 10px rgba(255,42,42,0.5), inset 0 0 10px rgba(255,42,42,0.2); }
+  50% { box-shadow: 0 0 25px rgba(255,42,42,0.9), inset 0 0 15px rgba(255,42,42,0.5); }
+}
+@keyframes pulse-glow-green {
+  0%, 100% { box-shadow: 0 0 10px rgba(0,255,65,0.5), inset 0 0 10px rgba(0,255,65,0.2); }
+  50% { box-shadow: 0 0 25px rgba(0,255,65,0.9), inset 0 0 15px rgba(0,255,65,0.5); }
+}
+@keyframes pulse-glow-yellow {
+  0%, 100% { box-shadow: 0 0 10px rgba(255,234,0,0.5), inset 0 0 10px rgba(255,234,0,0.2); }
+  50% { box-shadow: 0 0 25px rgba(255,234,0,0.9), inset 0 0 15px rgba(255,234,0,0.5); }
+}
+
+.animate-pulse-red { 
+  animation: pulse-glow-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; 
+  border: 1px solid var(--color-red); 
+}
+.animate-pulse-green { 
+  animation: pulse-glow-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; 
+  border: 1px solid var(--color-green); 
+}
+.animate-pulse-yellow { 
+  animation: pulse-glow-yellow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; 
+  border: 1px solid var(--color-yellow); 
+}
+
+/* =========================================
+   6. SCROLLBARS & DEFENSIVE OVERRIDES
+   ========================================= */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0a0a0a; }
-::-webkit-scrollbar-thumb { background: #330000; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #ff2a2a; }
+::-webkit-scrollbar-track { background: var(--color-bg-panel); }
+::-webkit-scrollbar-thumb { background: var(--color-red-dim); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-red); }
